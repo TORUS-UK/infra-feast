@@ -14,6 +14,7 @@ from feast import (
     Project,
     PushSource,
 )
+from feast.data_format import ParquetFormat
 from feast.types import Float32, Int64
 from feast.value_type import ValueType
 
@@ -30,6 +31,7 @@ watch = Entity(
 
 watch_data_source = FileSource(
    name="watch_100Hz_data",
+   file_format=ParquetFormat,
    path="data/watch_data.parquet",
    timestamp_field="event_ts",
    created_timestamp_column="created",
