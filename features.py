@@ -1,4 +1,9 @@
+# %%
 import datetime as dt
+import os
+
+import pandas as pd
+
 
 from feast import (
     Entity,
@@ -12,6 +17,8 @@ from feast import (
 from feast.types import Float32, Int64
 from feast.value_type import ValueType
 
+
+# %%
 project = Project(name="jc_project", description="A project that stores watch and camera data.")
 
 watch = Entity(
@@ -21,17 +28,16 @@ watch = Entity(
     value_type=ValueType.INT64,
 )
 
-#watch_data_source = FileSource(
-#    name="watch_100Hz_data",
-#    path="data/watch_data.parquet",
-#    timestamp_field="event_ts",
-#    created_timestamp_column="created",
-#)
+watch_data_source = FileSource(
+   name="watch_100Hz_data",
+   path="data/watch_data.parquet",
+   timestamp_field="event_ts",
+   created_timestamp_column="created",
+)
 
 watch_data_push_source = PushSource(
     name='watch_100Hz_push_source',
-#    batch_source=watch_data_source,
-    batch_source=None,  # Use offline store as configured in the yaml file.
+    batch_source=watch_data_source,
 )
 
 watch_data_fv = FeatureView(
@@ -56,3 +62,21 @@ watch_activity = FeatureService(
     name="watch_activity",
     features=[watch_data_fv],
 )
+
+
+def _init_data_sources():
+    #watch_data_filename = watch_data_source.path
+    print(f'Data path: {watch_data_source.path}')
+
+    if not os.path.exists(watch_data_source.path):
+        df = pd.DataFrame(columns=['event_ts', 'watch_id', 'acc_x', 'acc_y', 'acc_z', 'gyro_x', 'gyro_y', 'gyro_z', 'created'])
+        #df[['event_ts', 'created']] = df[['event_ts', 'created']].astype('timestamp[ns][pyarrow]')
+        df[['event_ts', 'watch_id', 'acc_x', 'acc_y', 'acc_z', 'gyro_x', 'gyro_y', 'gyro_z', 'created']] = [pd.NaT, -1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, pd.NaT]
+        #df[['event_ts', 'created']] = pd.to_datetime(df[['event_ts', 'created']])
+        df.to_parquet(watch_data_source.path) #, coerce_timestamsp='ns', allow_truncated_timestamsp=True)
+
+    elif not os.path.isfile(watch_data_source.path):
+        raise FileExistsError(f'Path {watch_data_source.path} exists but is not a file or is not accessible')
+
+
+_init_data_sources()
