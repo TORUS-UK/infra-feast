@@ -31,7 +31,7 @@ watch = Entity(
 
 watch_data_source = FileSource(
    name="watch_100Hz_data",
-   file_format=ParquetFormat,
+   file_format=ParquetFormat(),
    path="data/watch_data.parquet",
    timestamp_field="event_ts",
    created_timestamp_column="created",
