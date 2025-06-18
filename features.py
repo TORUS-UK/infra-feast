@@ -68,15 +68,26 @@ def _init_data_sources():
     #watch_data_filename = watch_data_source.path
     print(f'Data path: {watch_data_source.path}')
 
+    # NOTE: Workaround to make an empty FileSource work as a PushSource.
+    # Check if we need to add a line to create an nearly empty parquet file.
+    add_a_line = False
     if not os.path.exists(watch_data_source.path):
+        print('Creating the watch data source.')
         df = pd.DataFrame(columns=['event_ts', 'watch_id', 'acc_x', 'acc_y', 'acc_z', 'gyro_x', 'gyro_y', 'gyro_z', 'created'])
+        add_a_line = True
+    else:
+        print('Watch data source already exists.')
+        df = pd.read_parquet(watch_data_source.path)
+        if len(df) == 0:
+            add_a_line = True
+
+    # Add a line to the parquet file.
+    if add_a_line:
+        print('Adding a single non-empty line to the data source.')
         #df[['event_ts', 'created']] = df[['event_ts', 'created']].astype('timestamp[ns][pyarrow]')
         df[['event_ts', 'watch_id', 'acc_x', 'acc_y', 'acc_z', 'gyro_x', 'gyro_y', 'gyro_z', 'created']] = [pd.NaT, -1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, pd.NaT]
         #df[['event_ts', 'created']] = pd.to_datetime(df[['event_ts', 'created']])
-        df.to_parquet(watch_data_source.path) #, coerce_timestamsp='ns', allow_truncated_timestamsp=True)
-
-    elif not os.path.isfile(watch_data_source.path):
-        raise FileExistsError(f'Path {watch_data_source.path} exists but is not a file or is not accessible')
+        df.to_parquet(watch_data_source.path)
 
 
 _init_data_sources()
